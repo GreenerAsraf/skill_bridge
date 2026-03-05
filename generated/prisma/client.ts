@@ -47,3 +47,8 @@ export type Booking = Prisma.BookingModel
  * 
  */
 export type User = Prisma.UserModel
+/**
+ * Model tutor
+ * 
+ */
+export type tutor = Prisma.tutorModel

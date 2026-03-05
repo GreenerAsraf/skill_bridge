@@ -1,10 +1,11 @@
 import express, { Application, Request, Response } from 'express'
 import cors from 'cors'
 import { AuthRoutes } from './modules/Auth/auth.route'
+import { notFound } from './middlewares/notFound'
 
 const app: Application = express()
 
-// parsers
+// parser
 app.use(express.json())
 app.use(cors())
 
@@ -20,5 +21,7 @@ app.use('/api/auth', AuthRoutes)
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from Apollo Gears World!')
 })
+// app.use(errorHandler)
+app.use(notFound)
 
 export default app

@@ -51,3 +51,15 @@ model User {
     @@index([status])
     @@map("users")
 }
+
+model tutor {
+    id          String   @id @default(uuid())
+    userId      String   @unique
+    bio         String?
+    subjects    String[]
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    @@index([userId])
+    @@map("tutors")
+}
