@@ -4,8 +4,12 @@ import { TutorService } from './tutor.service'
 
 const createTutors = async (req: Request, res: Response) => {
   try {
-    console.log('Controller', req.user)
-    const result = await TutorService.createTutorIntoDB(req.body, req.user?.id)
+    if (!req.user?.id) {
+      throw new Error('Authenticated user id is missing')
+    }
+
+    console.log('Controller', req.body, req.user)
+    const result = await TutorService.createTutorIntoDB(req.body, req.user.id)
 
     sendResponse(res, {
       statusCode: 201,
@@ -16,7 +20,7 @@ const createTutors = async (req: Request, res: Response) => {
   } catch (error: any) {
     sendResponse(res, {
       statusCode: 201,
-      success: true,
+      success: false,
       message: error?.message || 'Something went wrong!!',
       data: null
     })

@@ -1,6 +1,9 @@
 import { prisma } from '../../lib/prisma'
 
 const createTutorIntoDB = async (payload: any, userId: string) => {
+  if (!userId) {
+    throw new Error('User ID is required to create a tutor')
+  }
   const user = await prisma.user.findUnique({
     where: {
       id: userId
@@ -11,8 +14,15 @@ const createTutorIntoDB = async (payload: any, userId: string) => {
   }
 
   const result = await prisma.tutor.create({
-    data: { ...payload, ownerId: userId }
+    data: {
+      ...payload,
+      userId: userId
+    }
   })
+
+  // const result = await prisma.tutor.create({
+  //   data: { ...payload, tutorId: userId }
+  // })
   return result
 }
 
