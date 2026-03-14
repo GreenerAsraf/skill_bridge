@@ -7,25 +7,16 @@ datasource db {
   provider = "postgresql"
 }
 
+// generator client {
+//   provider = "prisma-client-js"
+//   output   = "../generated/prisma"
+// }
 
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL")
+// }
 
-enum BookingStatus {
-  CONFIRMED
-  COMPLETED
-  CANCELLED
-}
-model Booking {
-    id        String   @id @default(uuid())
-    userId    String
-    tutorId   String
-    status    BookingStatus @default(CONFIRMED)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@index([userId])
-    @@index([tutorId])
-    @@map("bookings")
-}
 enum Role {
   STUDENT
   TUTOR
@@ -38,28 +29,157 @@ enum Status {
   BANNED
 }
 
+enum BookingStatus {
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+// =====================
+// User & Tutor Profile
+// =====================
+
 model User {
-    id        String   @id @default(uuid())
-    name      String?
-    email     String   @unique
-    password  String
-    role      Role
-    status    Status  @default(ACTIVE)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  id        String   @id @default(uuid())
+  name      String?
+  email     String   @unique
+  password  String
+  role      Role
+  status    Status   @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    @@index([status])
-    @@map("users")
+  // relations
+  tutor          tutor?        // one-to-one optional tutor profile
+  bookingsAsUser Booking[]     @relation("UserBookings")   // as student
+  bookingsAsTutor Booking[]    @relation("TutorBookings")  // as tutor
+  reviews        Review[]      @relation("ReviewsByUser")
+
+  @@index([status])
+  @@map("users")
 }
 
+// Tutor profile model (for tutors only)
 model tutor {
-    id          String   @id @default(uuid())
-    userId      String   @unique
-    bio         String?
-    subjects    String[]
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique
 
-    @@index([userId])
-    @@map("tutors")
+  bio       String?
+  subjects  String[] // e.g. ["Math", "Physics"]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+hourlyRate Int?     // price per hour
+  ratingAvg  Float?
+  ratingCount Int     @default(0)
+  // relations
+  categories        Category[]      @relation("TutorCategories")
+  bookings          Booking[]
+  reviews           Review[]        @relation("ReviewsForTutor")
+  availabilitySlots AvailabilitySlot[]
+
+  
+
+  @@index([userId])
+  @@map("tutors")
 }
+
+// ===============
+// Categories
+// ===============
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+
+  tutors      tutor[]  @relation("TutorCategories")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ===============
+// Bookings
+// ===============
+
+model Booking {
+  id        String        @id @default(uuid())
+
+  // who booked (student)
+  user      User          @relation("UserBookings", fields: [userId], references: [id])
+  userId    String
+
+  // which tutor (User with role TUTOR)
+  tutorUser User          @relation("TutorBookings", fields: [tutorId], references: [id])
+  tutorId   String
+
+  // specific tutor profile
+  tutorProfile  tutor     @relation(fields: [tutorProfileId], references: [id])
+  tutorProfileId String
+
+  status    BookingStatus @default(CONFIRMED)
+
+  startTime DateTime
+  endTime   DateTime
+  price     Int?
+  notes     String?
+
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // 1-1 with Review
+  review    Review?
+
+  @@index([userId])
+  @@index([tutorId])
+  @@index([tutorProfileId])
+  @@map("bookings")
+}
+
+// ===============
+// Reviews
+// ===============
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int      // 1–5
+  comment   String?
+
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  bookingId String   @unique
+
+  user      User     @relation("ReviewsByUser", fields: [userId], references: [id])
+  userId    String
+
+  tutor     tutor    @relation("ReviewsForTutor", fields: [tutorId], references: [id])
+  tutorId   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tutorId])
+}
+
+// ===============
+// Availability
+// ===============
+
+model AvailabilitySlot {
+  id        String   @id @default(uuid())
+  tutor     tutor    @relation(fields: [tutorId], references: [id])
+  tutorId   String
+
+  startTime DateTime
+  endTime   DateTime
+  isBooked  Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tutorId])
+  @@index([startTime, endTime])
+}
+
+
+

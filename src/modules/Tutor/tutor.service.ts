@@ -19,10 +19,6 @@ const createTutorIntoDB = async (payload: any, userId: string) => {
       userId: userId
     }
   })
-
-  // const result = await prisma.tutor.create({
-  //   data: { ...payload, tutorId: userId }
-  // })
   return result
 }
 
@@ -38,7 +34,7 @@ const getAllTutorsIntoDB = async (userId: string) => {
 
   const result = await prisma.tutor.findMany({
     where: {
-      //   tutorId: user.id,
+      userId: user.id
     }
   })
 
